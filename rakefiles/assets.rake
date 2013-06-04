@@ -28,14 +28,13 @@ def coffee_cmd(watch=false, debug=false)
         #
         # Ref: https://github.com/joyent/node/issues/2479
         #
-        # So, instead, we use watchmedo, which works around the problem
-        "watchmedo shell-command " +
-                  "--command 'node_modules/.bin/coffee -c ${watch_src_path}' " +
-                  "--recursive " +
-                  "--patterns '*.coffee' " +
-                  "--ignore-directories " +
-                  "--wait " +
-                  "."
+        # Rather than watching all of the directories in one command
+        # watch each static files subdirectory separately
+        cmds = []
+        Dir['*/static'].each do |coffee_folder|
+            cmds << "node_modules/.bin/coffee --watch --compile #{coffee_folder}"
+        end
+        cmds
     else
         'node_modules/.bin/coffee --compile .'
     end
@@ -121,11 +120,20 @@ namespace :assets do
 
     multitask :sass => 'assets:xmodule'
     namespace :sass do
+<<<<<<< HEAD
+=======
+        # In watch mode, sass doesn't immediately compile out of date files,
+        # so force a recompile first
+        # Also force xmodule files to be generated before we start watching anything
+        task :_watch => ['assets:sass:debug', 'assets:xmodule']
+>>>>>>> Use coffee watch command to watch whole directories, so that it will pick up new coffee files as they are created
         multitask :debug => 'assets:xmodule:debug'
     end
 
     multitask :coffee => 'assets:xmodule'
     namespace :coffee do
+        # Force xmodule files to be generated before we start watching anything
+        task :_watch => 'assets:xmodule'
         multitask :debug => 'assets:xmodule:debug'
 
         desc "Remove compiled coffeescript files"

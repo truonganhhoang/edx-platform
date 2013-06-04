@@ -36,7 +36,8 @@
     <a href="#" data-section="course-info" class="idash-default-section"> Course Info   </a> |
     <a href="#" data-section="enrollment"> Enrollment    </a> |
     <a href="#" data-section="student-admin"> Student Admin  </a> |
-    <a href="#" data-section="data-download"> Data Download </a>
+    <a href="#" data-section="data-download"> Data Download </a> |
+    <a href="#" data-section="analytics"> Analytics </a>
   ]</h2>
 
   ## each section corresponds to a section_data sub-dictionary provided by the view
@@ -58,13 +59,19 @@
 
 
   <section id="data-download" class="idash-section">
-    <input type="submit" name="action" value="List enrolled students with profile information"></input>
+    <input type="submit" name="action" data-endpoint="${ section_data['data_download']['enrolled_students_profiles_url'] }" value="List enrolled students with profile information"></input>
     <input type="submit" name="action" value="Student grades"></input>
     <input type="submit" name="action" value="Answer distributions (x students got y points)"></input>
     <input type="submit" name="action" data-endpoint="${ section_data['data_download']['grading_config_url'] }" value="Grading Configuration"></input>
     <div class="dumped-data-display"></div>
   </section>
 
+  <section id="analytics" class="idash-section">
+    <select id="distributions" data-endpoint="${ section_data['analytics']['profile_distributions_url'] }">
+      <option> Getting available distributions... </option>
+    </select>
+    <div class="distribution-display"></div>
+  </section>
 
 </section>
 </div>

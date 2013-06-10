@@ -6,7 +6,6 @@ Non-html views which the instructor dashboard requests.
 TODO add tracking
 """
 
-import csv
 import json
 import logging
 import os
@@ -63,6 +62,7 @@ def enrolled_students_profiles(request, course_id, csv=False):
 
     TODO accept requests for different attribute sets
     """
+    course = get_course_with_access(request.user, course_id, 'staff', depth=None)
 
     available_features = analytics.basic.AVAILABLE_STUDENT_FEATURES + analytics.basic.AVAILABLE_PROFILE_FEATURES
     query_features = ['username', 'name', 'language', 'location', 'year_of_birth', 'gender',
@@ -105,6 +105,7 @@ def profile_distribution(request, course_id):
     TODO how should query parameter interpretation work?
     TODO respond to csv requests as well
     """
+    course = get_course_with_access(request.user, course_id, 'staff', depth=None)
 
     try:
         features = json.loads(request.GET.get('features'))

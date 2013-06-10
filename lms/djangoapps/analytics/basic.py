@@ -4,14 +4,12 @@ Student and course analytics.
 Serve miscellaneous course and student data
 """
 
-import csv
-from django.http import HttpResponse
 from django.contrib.auth.models import User
 import xmodule.graders as xmgraders
 
 
 AVAILABLE_STUDENT_FEATURES = ['username', 'first_name', 'last_name', 'is_staff', 'email']
-AVAILABLE_PROFILE_FEATURES = ['year_of_birth', 'gender', 'level_of_education']
+AVAILABLE_PROFILE_FEATURES = ['name', 'language', 'location', 'year_of_birth', 'gender', 'level_of_education', 'mailing_address', 'goals']
 
 
 def enrolled_students_profiles(course_id, features):
@@ -20,7 +18,7 @@ def enrolled_students_profiles(course_id, features):
     """
     # enrollments = CourseEnrollment.objects.filter(course_id=course_id)
     # students = [enrollment.user for enrollment in enrollments]
-    students = User.objects.filter(courseenrollment__course_id=course_id)
+    students = User.objects.filter(courseenrollment__course_id=course_id).order_by('username').select_related('profile')
 
     def extract_student(student):
         student_features = [feature for feature in features if feature in AVAILABLE_STUDENT_FEATURES]
@@ -32,24 +30,7 @@ def enrolled_students_profiles(course_id, features):
         student_dict.update(profile_dict)
         return student_dict
 
-    return [extract_student(student) for student in students.all()]
-
-
-def create_csv_response(filename, header, datarows):
-    """
-    Create an HttpResponse with an attached .csv file
-
-    header   e.g. ['Name', 'Email']
-    datarows e.g. [['Jim', 'jim@edy.org'], ['Jake', 'jake@edy.org'], ...]
-    """
-    response = HttpResponse(mimetype='text/csv')
-    response['Content-Disposition'] = 'attachment; filename={0}'.format(filename)
-    writer = csv.writer(response, dialect='excel', quotechar='"', quoting=csv.QUOTE_ALL)
-    writer.writerow(header)
-    for datarow in datarows:
-        encoded_row = [unicode(s).encode('utf-8') for s in datarow]
-        writer.writerow(encoded_row)
-    return response
+    return [extract_student(student) for student in students]
 
 
 def dump_grading_context(course):

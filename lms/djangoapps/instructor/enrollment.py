@@ -16,13 +16,16 @@ def enroll_emails(course_id, student_emails, auto_enroll=False):
     students is a list of student emails e.g. ["foo@bar.com", "bar@foo.com]
     each of whom possibly does not exist in db.
 
+    status contains the relevant prior state and action performed on the user.
+    ce stands for CourseEnrollment
+    cea stands for CourseEnrollmentAllowed
+    ! stands for the object not existing prior to the action
     return a mapping from status to emails.
     """
 
     auto_string = {False: 'allowed', True: 'autoenrolled'}[auto_enroll]
 
     status_map = {
-        'unprocessed':               student_emails,
         'user/ce/alreadyenrolled':   [],
         'user/!ce/enrolled':         [],
         'user/!ce/rejected':         [],
@@ -30,7 +33,7 @@ def enroll_emails(course_id, student_emails, auto_enroll=False):
         '!user/!cea/' + auto_string: [],
     }
 
-    for student_email in status_map['unprocessed']:
+    for student_email in student_emails:
         # status: user
         try:
             user = User.objects.get(email=student_email)
@@ -53,13 +56,13 @@ def enroll_emails(course_id, student_emails, auto_enroll=False):
         except User.DoesNotExist:
             # status: !user/cea
             try:
-                cea = CourseEnrollmentAllowed.objects.get(user=user, course_id=course_id)
+                cea = CourseEnrollmentAllowed.objects.get(course_id=course_id, email=student_email)
                 cea.auto_enroll = auto_enroll
                 cea.save()
                 status_map['!user/cea/' + auto_string].append(student_email)
             # status: !user/!cea
             except CourseEnrollmentAllowed.DoesNotExist:
-                cea = CourseEnrollmentAllowed(email=student_email, course_id=course_id, auto_enroll=auto_enroll)
+                cea = CourseEnrollmentAllowed(course_id=course_id, email=student_email, auto_enroll=auto_enroll)
                 cea.save()
                 status_map['!user/!cea/' + auto_string].append(student_email)
 
@@ -73,12 +76,17 @@ def unenroll_emails(course_id, student_emails):
     students is a list of student emails e.g. ["foo@bar.com", "bar@foo.com]
     each of whom possibly does not exist in db.
 
+    Fail quietly on student emails that do not match any users or allowed enrollments.
+
+    status contains the relevant prior state and action performed on the user.
+    ce stands for CourseEnrollment
+    cea stands for CourseEnrollmentAllowed
+    ! stands for the object not existing prior to the action
     return a mapping from status to emails.
     """
 
     # NOTE these are not mutually exclusive
     status_map = {
-        'unprocessed': student_emails,
         'cea/disallowed': [],
         'ce/unenrolled': [],
         'ce/failed': [],
@@ -108,7 +116,7 @@ def unenroll_emails(course_id, student_emails):
     return status_map
 
 
-def _split_input_list(str_list):
+def split_input_list(str_list):
     """
     Separate out individual student email from the comma, or space separated string.
 

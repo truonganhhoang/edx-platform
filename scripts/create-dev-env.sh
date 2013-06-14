@@ -104,9 +104,9 @@ PROG=${0##*/}
 # Adjust this to wherever you'd like to place the codebase
 BASE="${PROJECT_HOME:-$HOME}/edx_all"
 
-# Use a sensible default (~/.virtualenvs) for your Python virtualenvs
+# Use a sensible default (~/Envs) for your Python virtualenvs
 # unless you've already got one set up with virtualenvwrapper.
-PYTHON_DIR=${WORKON_HOME:-"$HOME/.virtualenvs"}
+PYTHON_DIR=${WORKON_HOME:-"$HOME/Envs"}
 
 # RVM defaults its install to ~/.rvm, but use the overridden rvm_path
 # if that's what's preferred.
@@ -275,7 +275,7 @@ EO
 esac
 
 
-# Clone MITx repositories
+# Clone edX repositories
 
 clone_repos
 
@@ -447,7 +447,7 @@ fi
 # building correct version of distribute from source
 DISTRIBUTE_VER="0.6.28"
 output "Building Distribute"
-SITE_PACKAGES="$HOME/.virtualenvs/edx-platform/lib/python2.7/site-packages"
+SITE_PACKAGES="$PYTHON_DIR/edx-platform/lib/python2.7/site-packages"
 cd "$SITE_PACKAGES"
 curl -O http://pypi.python.org/packages/source/d/distribute/distribute-${DISTRIBUTE_VER}.tar.gz
 tar -xzvf distribute-${DISTRIBUTE_VER}.tar.gz
@@ -545,7 +545,7 @@ cat<<END
 
    Then, every time you're ready to work on the project, just run
 
-        $ workon mitx
+        $ workon edx-platform
 
    To initialize Django
 

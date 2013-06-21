@@ -9,6 +9,8 @@ class BatchEnrollment
     $emails_input = @$container.find("textarea[name='student-emails']'")
     $btn_enroll = @$container.find("input[name='enroll']'")
     $btn_unenroll = @$container.find("input[name='unenroll']'")
+    $checkbox_autoenroll = @$container.find("input[name='auto-enroll']'")
+    window.autoenroll = $checkbox_autoenroll
     $task_response = @$container.find(".task-response")
 
     $emails_input.click -> log 'click $emails_input'
@@ -16,20 +18,27 @@ class BatchEnrollment
     $btn_unenroll.click -> log 'click $btn_unenroll'
 
     $btn_enroll.click ->
-      $.getJSON $btn_enroll.data('endpoint'), enroll: $emails_input.val() , (data) ->
+      send_data =
+        action: 'enroll'
+        emails: $emails_input.val()
+        auto_enroll: $checkbox_autoenroll.is(':checked')
+      $.getJSON $btn_enroll.data('endpoint'), send_data, (data) ->
         log 'received response for enroll button', data
         display_response(data)
 
     $btn_unenroll.click ->
-      log 'VAL', $emails_input.val()
-      $.getJSON $btn_unenroll.data('endpoint'), unenroll: $emails_input.val() , (data) ->
-        # log 'received response for unenroll button', data
-        # display_response(data)
+      send_data =
+        action: 'unenroll'
+        emails: $emails_input.val()
+        auto_enroll: $checkbox_autoenroll.is(':checked')
+      $.getJSON $btn_unenroll.data('endpoint'), send_data, (data) ->
+        log 'received response for unenroll button', data
+        display_response(data)
 
     display_response = (data_from_server) ->
       $task_response.empty()
 
-      response_code_dict = _.extend {}, data_from_server.enrolled, data_from_server.unenrolled
+      response_code_dict = _.extend {}, data_from_server.results
       # response_code_dict e.g. {'code': ['email1', 'email2'], ...}
       message_ordering = [
         'msg_error_enroll'
@@ -77,13 +86,10 @@ class BatchEnrollment
         will_attach = false
 
         for code in msg_to_codes[msg_symbol]
-          log 'logging code', code
           emails = response_code_dict[code]
-          log 'emails', emails
 
           if emails and emails.length
             for email in emails
-              log 'logging email', email
               email_list.append $ '<li/>', text: email
               will_attach = true
 
@@ -114,7 +120,6 @@ class AuthList
   reload_auth_list: =>
     list_endpoint = @$display_table.data 'endpoint'
     $.getJSON list_endpoint, {rolename: @rolename}, (data) =>
-      log data
 
       @$display_table.empty()
 
@@ -139,11 +144,9 @@ class AuthList
       ]
 
       table_data = data[@rolename]
-      log 'table_data', table_data
 
       $table_placeholder = $ '<div/>', class: 'slickgrid'
       @$display_table.append $table_placeholder
-      log '@$display_table', $table_placeholder
       grid = new Slick.Grid($table_placeholder, table_data, columns, options)
       grid.autosizeColumns()
 
@@ -155,8 +158,7 @@ class AuthList
   access_change: (email, rolename, mode, cb) ->
     access_change_endpoint = @$add_section.data 'endpoint'
     $.getJSON access_change_endpoint, {email: email, rolename: @rolename, mode: mode}, (data) ->
-      log data
-      cb?()
+      cb?(data)
 
 
 class Membership
@@ -166,20 +168,25 @@ class Membership
 
     # isolate sections from each other's errors.
     plantTimeout 0, => @batchenrollment = new BatchEnrollment @$section.find '.batch-enrollment'
-    plantTimeout 0, => @stafflist       = new AuthList (@$section.find '.auth-list-container.auth-list-staff'), 'staff'
-    plantTimeout 0, => @instructorlist  = new AuthList (@$section.find '.auth-list-container.auth-list-instructor'), 'instructor'
+    plantTimeout 0, => @staff_list       = new AuthList (@$section.find '.auth-list-container.auth-list-staff'), 'staff'
+    plantTimeout 0, => @instructor_list  = new AuthList (@$section.find '.auth-list-container.auth-list-instructor'), 'instructor'
+    plantTimeout 0, => @beta_list        = new AuthList (@$section.find '.auth-list-container.auth-list-beta'), 'beta'
 
+    # forum lists
     # TODO names like 'Administrator' should come from server through template.
-    plantTimeout 0, => @forum_admin_list  = new AuthList (@$section.find '.auth-list-container.auth-list-forum-admin'),        'Administrator'
-    plantTimeout 0, => @forum_mod_list  = new AuthList (@$section.find '.auth-list-container.auth-list-forum-moderator'),    'Moderator'
-    plantTimeout 0, => @forum_comta_list  = new AuthList (@$section.find '.auth-list-container.auth-list-forum-community-ta'), 'Community TA'
+    plantTimeout 0, => @forum_admin_list = new AuthList (@$section.find '.auth-list-container.auth-list-forum-admin'),        'Administrator'
+    plantTimeout 0, => @forum_mod_list   = new AuthList (@$section.find '.auth-list-container.auth-list-forum-moderator'),    'Moderator'
+    plantTimeout 0, => @forum_comta_list = new AuthList (@$section.find '.auth-list-container.auth-list-forum-community-ta'), 'Community TA'
 
   onClickTitle: ->
-    @stafflist.$display_table.empty()
-    @stafflist.reload_auth_list()
+    @staff_list.$display_table.empty()
+    @staff_list.reload_auth_list()
 
-    @instructorlist.$display_table.empty()
-    @instructorlist.reload_auth_list()
+    @instructor_list.$display_table.empty()
+    @instructor_list.reload_auth_list()
+
+    @beta_list.$display_table.empty()
+    @beta_list.reload_auth_list()
 
     @forum_admin_list.$display_table.empty()
     @forum_admin_list.reload_auth_list()

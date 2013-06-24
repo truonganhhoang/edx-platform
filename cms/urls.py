@@ -135,6 +135,10 @@ urlpatterns += (
     url(r'^jsi18n/$', 'django.views.i18n.javascript_catalog', js_info_dict),
 )
 
+urlpatterns += (
+    #for content testing
+    url(r'^test_problem$', 'content_testing.views.test_problem', name='testing'),
+)
 
 if settings.ENABLE_JASMINE:
     # # Jasmine

@@ -19,7 +19,7 @@
     }
 
     function jsinputConstructor(spec) {
-        // Define an class that will be instantiated for each.jsinput element
+        // Define an class that will be instantiated for each jsinput element
         // of the DOM
 
         // 'that' is the object returned by the constructor. It has a single
@@ -77,8 +77,11 @@
                     state:  state
                 };
                 inputfield().val(JSON.stringify(store));
+                console.log("Answer:", ans);
+                console.log("Store:", store);
             } else {
                 inputfield().val(ans);
+                console.log("Answer:", ans);
             }
             return;
         };
@@ -91,6 +94,13 @@
             $(updatebutton).click(update);
         }
 
+        // Wait for the iframe readystate before calling 'fn'. If more than
+        // 'max' ms have passed, call 'fn' anyhow (since the iframe may
+        // misbehave in reporting its state).
+        //function waitReadyState(fn, max) {
+            //while (! $(spec.elem).find('iframe[class^="jsinput_"]').get(0).)
+        //}
+         
 
 
         /*                       Public methods                     */
@@ -116,7 +126,9 @@
             updateHandler();
             bindCheck();
             // Check whether application takes in state and there is a saved
-            // state to give it
+            // state to give it. If getsetstate is specified but calling it
+            // fails, wait and try again, since the iframe might still be
+            // loading.
             if (getsetstate() && getstoredstate()) {
                 console.log("Using stored state...");
                 var sval;
@@ -125,10 +137,24 @@
                 } else {
                     sval = getstoredstate();
                 }
-                $(spec.elem).
-                    find('iframe[name^="iframe_"]').
-                    get(0).
-                    contentWindow[getsetstate()](sval);
+                console.log($(spec.elem).find('iframe[name^="iframe_"]').get(0));
+                function whileloop(n) {
+                    if (n < 10){
+                        try {
+                            $(spec.elem).
+                                find('iframe[name^="iframe_"]').
+                                get(0).
+                                contentWindow[getsetstate()](sval);
+                        } catch (err) {
+                            setTimeout(whileloop(n+1), 200);
+                        }
+                    }
+                    else {
+                        console.log("Error: could not set state");
+                    }
+                }
+                whileloop(0);
+                
             }
         } else {
             // NOT CURRENTLY SUPPORTED
@@ -193,5 +219,6 @@
         //}
     //};
 
-    setTimeout(walkDOM, 200);
+   
+    setTimeout(walkDOM, 100);
 })(window.jsinput = window.jsinput || {})

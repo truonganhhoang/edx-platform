@@ -130,10 +130,10 @@ def press(request):
 
 def process_survey_link(survey_link, user):
     """
-    If {UNIQUE_ID} appears in the link, replace it with a unique id for the user.
+    If {EDX_ID} appears in the link, replace it with a unique id for the user.
     Currently, this is sha1(user.username).  Otherwise, return survey_link.
     """
-    return survey_link.format(UNIQUE_ID=unique_id_for_user(user))
+    return survey_link.format(EDX_ID=unique_id_for_user(user))
 
 
 def cert_info(user, course):
@@ -282,7 +282,7 @@ def dashboard(request):
 
     # Get the 3 most recent news
     top_news = _get_news(top=3) if not settings.MITX_FEATURES.get('ENABLE_MKTG_SITE', False) else None
-            
+
     # get info w.r.t ExternalAuthMap
     external_auth_map = None
     try:
@@ -591,7 +591,7 @@ def create_account(request, post_override=None):
         if eamap.external_name.strip() == '':
             name = post_vars.get('name', '')
         else:
-            name = eamap.external_name 
+            name = eamap.external_name
         password = eamap.internal_password
         post_vars = dict(post_vars.items())
         post_vars.update(dict(email=email, name=name, password=password))

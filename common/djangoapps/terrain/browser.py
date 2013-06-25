@@ -76,6 +76,7 @@ def initial_setup(server):
 
     # Set the browser size to 1280x1024
     world.browser.driver.set_window_size(1280, 1024)
+    #world.absorb({}, 'scenario_dict')
 
 
 @before.each_scenario
@@ -86,6 +87,13 @@ def reset_data(scenario):
     """
     LOGGER.debug("Flushing the test database...")
     call_command('flush', interactive=False)
+    world.absorb({}, 'scenario_dict')
+
+
+@after.each_scenario
+def clear_data(scenario):
+    world.spew('scenario_dict')
+
 
 # Uncomment below to trigger a screenshot on error
 # @after.each_scenario

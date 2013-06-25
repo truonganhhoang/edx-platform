@@ -396,11 +396,11 @@ class TestCoursesLoadTestCase_MongoModulestore(PageLoaderTestCase):
         import_from_xml(module_store, TEST_DATA_DIR, ['toy'])
         self.check_random_page_loads(module_store)
 
-    def test_full_textbooks_loads(self):
+    def test_toy_textbooks_loads(self):
         module_store = modulestore()
-        import_from_xml(module_store, TEST_DATA_DIR, ['full'])
+        import_from_xml(module_store, TEST_DATA_DIR, ['toy'])
 
-        course = module_store.get_item(Location(['i4x', 'edX', 'full', 'course', '6.002_Spring_2012', None]))
+        course = module_store.get_item(Location(['i4x', 'edX', 'toy', 'course', '2012_Fall', None]))
 
         self.assertGreater(len(course.textbooks), 0)
 
@@ -413,7 +413,6 @@ class TestNavigation(LoginEnrollmentTestCase):
         xmodule.modulestore.django._MODULESTORES = {}
 
         # Assume courses are there
-        self.full = modulestore().get_course("edX/full/6.002_Spring_2012")
         self.toy = modulestore().get_course("edX/toy/2012_Fall")
 
         # Create two accounts
@@ -429,7 +428,6 @@ class TestNavigation(LoginEnrollmentTestCase):
         """Make sure that the accordion remembers where you were properly"""
         self.login(self.student, self.password)
         self.enroll(self.toy)
-        self.enroll(self.full)
 
         # First request should redirect to ToyVideos
         resp = self.client.get(reverse('courseware',
@@ -487,8 +485,8 @@ class TestViewAuth(LoginEnrollmentTestCase):
     def setUp(self):
         xmodule.modulestore.django._MODULESTORES = {}
 
-        self.full = modulestore().get_course("edX/full/6.002_Spring_2012")
         self.toy = modulestore().get_course("edX/toy/2012_Fall")
+        self.toytwo = modulestore().get_course("edX/two_toy/TT_2012_Fall")
 
         # Create two accounts
         self.student = 'view@test.com'
@@ -514,7 +512,6 @@ class TestViewAuth(LoginEnrollmentTestCase):
                                      reverse('about_course',
                                              args=[self.toy.id]))
         self.enroll(self.toy)
-        self.enroll(self.full)
         # should work now -- redirect to first page
         response = self.client.get(reverse('courseware',
                                    kwargs={'course_id': self.toy.id}))
@@ -537,8 +534,7 @@ class TestViewAuth(LoginEnrollmentTestCase):
             return urls
 
         # Randomly sample an instructor page
-        url = random.choice(instructor_urls(self.toy) +
-                            instructor_urls(self.full))
+        url = random.choice(instructor_urls(self.toy))
 
         # Shouldn't be able to get to the instructor pages
         print 'checking for 404 on {0}'.format(url)
@@ -552,12 +548,13 @@ class TestViewAuth(LoginEnrollmentTestCase):
         self.logout()
         self.login(self.instructor, self.password)
 
-        # Now should be able to get to the toy course, but not the full course
-        url = random.choice(instructor_urls(self.toy))
+        # Now should be able to get to the toy course, but not the toy_two course
+        url = random.choice(instructor_urls(self.toy) +
+                            instructor_urls(self.toytwo))
         print 'checking for 200 on {0}'.format(url)
         self.check_for_get_code(200, url)
 
-        url = random.choice(instructor_urls(self.full))
+        url = random.choice(instructor_urls(self.toytwo))
         print 'checking for 404 on {0}'.format(url)
         self.check_for_get_code(404, url)
 
@@ -568,7 +565,7 @@ class TestViewAuth(LoginEnrollmentTestCase):
 
         # and now should be able to load both
         url = random.choice(instructor_urls(self.toy) +
-                            instructor_urls(self.full))
+                            instructor_urls(self.toytwo))
         print 'checking for 200 on {0}'.format(url)
         self.check_for_get_code(200, url)
 
@@ -606,10 +603,10 @@ class TestViewAuth(LoginEnrollmentTestCase):
         # Make courses start in the future
         tomorrow = datetime.datetime.now(UTC()) + datetime.timedelta(days=1)
         self.toy.lms.start = tomorrow
-        self.full.lms.start = tomorrow
+        self.toytwo.lms.start = tomorrow
 
         self.assertFalse(self.toy.has_started())
-        self.assertFalse(self.full.has_started())
+        self.assertFalse(self.toytwo.has_started())
         self.assertFalse(settings.MITX_FEATURES['DISABLE_START_DATES'])
 
         def reverse_urls(names, course):
@@ -693,11 +690,11 @@ class TestViewAuth(LoginEnrollmentTestCase):
         print '=== Testing student access....'
         self.login(self.student, self.password)
         self.enroll(self.toy)
-        self.enroll(self.full)
+        self.enroll(self.toytwo)
 
         # shouldn't be able to get to anything except the light pages
         check_non_staff(self.toy)
-        check_non_staff(self.full)
+        check_non_staff(self.toytwo)
 
         print '=== Testing course instructor access....'
         # Make the instructor staff in the toy course
@@ -709,10 +706,10 @@ class TestViewAuth(LoginEnrollmentTestCase):
         self.login(self.instructor, self.password)
         # Enroll in the classes---can't see courseware otherwise.
         self.enroll(self.toy)
-        self.enroll(self.full)
+        self.enroll(self.toytwo)
 
         # should now be able to get to everything for toy course
-        check_non_staff(self.full)
+        check_non_staff(self.toytwo)
         check_staff(self.toy)
 
         print '=== Testing staff access....'
@@ -723,7 +720,7 @@ class TestViewAuth(LoginEnrollmentTestCase):
 
         # and now should be able to load both
         check_staff(self.toy)
-        check_staff(self.full)
+        check_staff(self.toytwo)
 
     def _do_test_enrollment_period(self):
         """Actually do the test, relying on settings to be right."""
@@ -738,16 +735,11 @@ class TestViewAuth(LoginEnrollmentTestCase):
         self.toy.enrollment_start = tomorrow
         self.toy.enrollment_end = nextday
 
-        # full course's has
-        self.full.enrollment_start = yesterday
-        self.full.enrollment_end = tomorrow
-
         print "login"
         # First, try with an enrolled student
         print '=== Testing student access....'
         self.login(self.student, self.password)
         self.assertFalse(self.try_enroll(self.toy))
-        self.assertTrue(self.try_enroll(self.full))
 
         print '=== Testing course instructor access....'
         # Make the instructor staff in the toy course

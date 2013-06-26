@@ -183,9 +183,10 @@ with open(ENV_ROOT / CONFIG_PREFIX + "auth.json") as auth_file:
     AUTH_TOKENS = json.load(auth_file)
 
 ############### Mixed Related(Secure/Not-Secure) Items ##########
-# If Segment.io key specified, load it and enable Segment.io if the feature flag is set
+# If Segment.io key and secret specified, load them and enable Segment.io if the feature flag is set
 SEGMENT_IO_LMS_KEY = AUTH_TOKENS.get('SEGMENT_IO_LMS_KEY')
-if SEGMENT_IO_LMS_KEY:
+SEGMENT_IO_SECRET = AUTH_TOKENS.get('SEGMENT_IO_SECRET')
+if SEGMENT_IO_LMS_KEY and SEGMENT_IO_SECRET:
     MITX_FEATURES['SEGMENT_IO_LMS'] = ENV_TOKENS.get('SEGMENT_IO_LMS', False)
 
 

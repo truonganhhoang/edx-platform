@@ -12,6 +12,17 @@ import django.contrib.auth.views
 if settings.DEBUG or settings.MITX_FEATURES.get('ENABLE_DJANGO_ADMIN_SITE'):
     admin.autodiscover()
 
+######## SEGMENT.IO ########
+if settings.MITX_FEATURES.get('SEGMENT_IO_LMS'):
+    import analytics
+
+    # flush every 20 events - default
+    analytics.init(settings.SEGMENT_IO_SECRET)
+
+    # flush every event - for dev only!!
+    #analytics.init(settings.SEGMENT_IO_SECRET, flush_at=1)
+
+
 urlpatterns = ('',  # nopep8
     # certificate view
 

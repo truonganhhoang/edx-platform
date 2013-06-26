@@ -55,6 +55,9 @@ ipython==0.13.1
 # Used for development operation
 watchdog==0.6.0
 
+# Used for Segment.io event routing
+analytics-python==0.4.2
+
 # Metrics gathering and monitoring
 dogapi==1.2.1
 dogstatsd-python==0.2.1

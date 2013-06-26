@@ -4,6 +4,9 @@ import pytz
 import datetime
 import dateutil.parser
 
+# Segment.io
+import analytics
+
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.shortcuts import redirect
@@ -18,6 +21,8 @@ log = logging.getLogger("tracking")
 
 LOGFIELDS = ['username', 'ip', 'event_source', 'event_type', 'event', 'agent', 'page', 'time', 'host']
 
+# Event types to route through Segment.io as well as our servers
+SEGMENT_IO_WHITELIST = ['list-students']
 
 def log_event(event):
     """Write tracking event to log file, and optionally to TrackingLog model."""
@@ -70,6 +75,7 @@ def user_track(request):
     return HttpResponse('success')
 
 
+# hijack this method with a whitelist to send events from the dashboard to Segment.io
 def server_track(request, event_type, event, page=None):
     """Log events related to server requests."""
     try:
@@ -96,6 +102,11 @@ def server_track(request, event_type, event, page=None):
 
     if event_type.startswith("/event_logs") and request.user.is_staff:  # don't log
         return
+
+    # route event type to Segment.io
+    if event_type in SEGMENT_IO_WHITELIST:
+        analytics.track(username, event_type, event)
+
     log_event(event)
 
 

@@ -22,6 +22,8 @@ from .session_kv_store import SessionKeyValueStore
 from .requests import render_from_lms
 from .access import has_access
 
+import traceback
+
 __all__ = ['preview_dispatch', 'preview_component']
 
 log = logging.getLogger(__name__)
@@ -86,23 +88,28 @@ def preview_module_system(request, preview_id, descriptor):
     """
 
     def preview_model_data(descriptor):
+        # traceback.print_stack()
         return DbModel(
             SessionKeyValueStore(request, descriptor._model_data),
             descriptor.module_class,
             preview_id,
             MongoUsage(preview_id, descriptor.location.url()),
         )
+        return {}
+
+    def preview_get_module(descriptor):
+        return partial(get_preview_module, request, preview_id)
 
     return ModuleSystem(
         ajax_url=reverse('preview_dispatch', args=[preview_id, descriptor.location.url(), '']).rstrip('/'),
         # TODO (cpennington): Do we want to track how instructors are using the preview problems?
         track_function=lambda event_type, event: None,
         filestore=descriptor.system.resources_fs,
-        get_module=partial(get_preview_module, request, preview_id),
+        get_module=preview_get_module,
         render_template=render_from_lms,
         debug=True,
         replace_urls=partial(static_replace.replace_static_urls, data_directory=None, course_namespace=descriptor.location),
-        user=request.user,
+        user=None,
         xblock_model_data=preview_model_data,
     )
 

@@ -341,6 +341,9 @@ INSTALLED_APPS = (
 
     # comment common
     'django_comment_common',
+
+    #automated content testing for custom response
+    'content_testing',
 )
 
 ################# EDX MARKETING SITE ##################################

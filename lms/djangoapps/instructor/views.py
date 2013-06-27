@@ -249,6 +249,7 @@ def instructor_dashboard(request, course_id):
 
     elif 'Dump description of graded assignments configuration' in action:
         track.views.server_track(request, action, {}, page='idashboard')
+        #track.views.server_track(request, 'Dump description of graded assignments configuration', {}, page='idashboard')
         msg += dump_grading_context(course)
 
     elif "Rescore ALL students' problem submissions" in action:

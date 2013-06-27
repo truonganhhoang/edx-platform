@@ -21,7 +21,7 @@ LOGFIELDS = ['username', 'ip', 'event_source', 'event_type', 'event', 'agent', '
 # Segment.io
 if settings.MITX_FEATURES.get('SEGMENT_IO_LMS'):
     import analytics
-    SEGMENT_IO_WHITELIST = ['list-students']
+    SEGMENT_IO_WHITELIST = ['list-students', 'dump-grades', 'dump-grades-raw', 'dump-grades-csv', 'dump-grades-csv-raw', 'dump-answer-dist-csv']
 
 def log_event(event):
     """Write tracking event to log file, and optionally to TrackingLog model."""

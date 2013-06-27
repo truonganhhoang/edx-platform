@@ -30,6 +30,16 @@ import analytics.distributions
 import analytics.csvs
 
 
+def common_exceptions_400(fn):
+    """ Catches common exceptions and renders matching 400 errors. (decorator) """
+    def wrapped(*args, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except User.DoesNotExist:
+            return HttpResponseBadRequest("User does not exist.")
+    return wrapped
+
+
 @ensure_csrf_cookie
 @cache_control(no_cache=True, no_store=True, must_revalidate=True)
 def students_update_enrollment_email(request, course_id):
@@ -66,6 +76,7 @@ def students_update_enrollment_email(request, course_id):
 
 @ensure_csrf_cookie
 @cache_control(no_cache=True, no_store=True, must_revalidate=True)
+@common_exceptions_400
 def access_allow_revoke(request, course_id):
     """
     Modify staff/instructor access.
@@ -82,10 +93,7 @@ def access_allow_revoke(request, course_id):
     rolename = request.GET.get('rolename')
     mode = request.GET.get('mode')
 
-    try:
-        user = User.objects.get(email=email)
-    except User.DoesNotExist:
-        return HttpResponseBadRequest("user does not exist")
+    user = User.objects.get(email=email)
 
     if mode == 'allow':
         access.allow_access(course, user, rolename)
@@ -268,6 +276,7 @@ def get_student_progress_url(request, course_id):
 
 @ensure_csrf_cookie
 @cache_control(no_cache=True, no_store=True, must_revalidate=True)
+@common_exceptions_400
 def redirect_to_student_progress(request, course_id):
     """
     Redirects to the specified students progress page
@@ -279,8 +288,8 @@ def redirect_to_student_progress(request, course_id):
 
     student_email = request.GET.get('student_email')
     if not student_email:
-        # TODO Is there a way to do a - say - 'raise Http400'?
-        return HttpResponseBadRequest()
+        return HttpResponseBadRequest("Must provide an email.")
+
     user = User.objects.get(email=student_email)
 
     progress_url = reverse('student_progress', kwargs={'course_id': course_id, 'student_id': user.id})
@@ -295,6 +304,7 @@ def redirect_to_student_progress(request, course_id):
 
 @ensure_csrf_cookie
 @cache_control(no_cache=True, no_store=True, must_revalidate=True)
+@common_exceptions_400
 def reset_student_attempts(request, course_id):
     """
     Resets a students attempts counter or starts a task to reset all students attempts counters. Optionally deletes student state for a problem.
@@ -324,11 +334,11 @@ def reset_student_attempts(request, course_id):
     response_payload['problem_to_reset'] = problem_to_reset
 
     if student_email:
-        student = User.objects.get(email=student_email)
         try:
+            student = User.objects.get(email=student_email)
             enrollment.reset_student_attempts(course_id, student, module_state_key, delete_module=will_delete_module)
         except StudentModule.DoesNotExist:
-            return HttpResponseBadRequest()
+            return HttpResponseBadRequest("Module does not exist.")
     elif all_students:
         task = instructor_task.api.submit_reset_problem_attempts_for_all_students(request, course_id, module_state_key)
         response_payload['task'] = 'created'
@@ -341,6 +351,7 @@ def reset_student_attempts(request, course_id):
 
 @ensure_csrf_cookie
 @cache_control(no_cache=True, no_store=True, must_revalidate=True)
+@common_exceptions_400
 def rescore_problem(request, course_id):
     """
     Starts a background process a students attempts counter. Optionally deletes student state for a problem.
@@ -462,6 +473,7 @@ def list_forum_members(request, course_id):
 
 @ensure_csrf_cookie
 @cache_control(no_cache=True, no_store=True, must_revalidate=True)
+@common_exceptions_400
 def update_forum_role_membership(request, course_id):
     """
     Modify forum role access.
@@ -483,8 +495,8 @@ def update_forum_role_membership(request, course_id):
     try:
         user = User.objects.get(email=email)
         access.update_forum_role_membership(course_id, user, rolename, mode)
-    except User.DoesNotExist, Role.DoesNotExist:
-        return HttpResponseBadRequest()
+    except Role.DoesNotExist:
+        return HttpResponseBadRequest("Role does not exist.")
 
     response_payload = {
         'course_id': course_id,

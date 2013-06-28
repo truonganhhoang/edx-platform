@@ -96,13 +96,31 @@ clone_repos() {
     fi
 }
 
+set_base_default() {  # if PROJECT_HOME not set
+    # 2 possibilities: this is from cloned repo, or not
+
+    # See if remote's url is named edx-platform (this works for forks too, but
+    # not if the name was changed).
+    cd "$( dirname "${BASH_SOURCE[0]}" )" 
+    this_repo=$(basename $(git ls-remote --get-url 2>/dev/null) 2>/dev/null) ||
+        echo -n ""
+
+    if [[ "x$this_repo" = "xedx-platform.git" ]]; then
+        # We are in the edx repo and already have git installed. Let git do the
+        # work of finding base dir:
+        echo "$(dirname $(git rev-parse --show-toplevel))"
+    else
+        echo "$HOME/edx_all"
+    fi
+}
+
 
 ### START
 
 PROG=${0##*/}
 
 # Adjust this to wherever you'd like to place the codebase
-BASE="${PROJECT_HOME:-$HOME}/edx_all"
+BASE="${PROJECT_HOME:-$(set_base_default)}"
 
 # Use a sensible default (~/.virtualenvs) for your Python virtualenvs
 # unless you've already got one set up with virtualenvwrapper.

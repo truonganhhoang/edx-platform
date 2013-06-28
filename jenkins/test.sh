@@ -60,17 +60,19 @@ fi
 
 export PIP_DOWNLOAD_CACHE=/mnt/pip-cache
 
-source /mnt/virtualenvs/"$JOB_NAME"/bin/activate
+source $VIRTUALENV_DIR/bin/activate
 
 bundle install
 
 rake install_prereqs
 rake clobber
-rake pep8 > pep8.log || cat pep8.log
-rake pylint > pylint.log || cat pylint.log
 
 # Run the unit tests (use phantomjs for javascript unit tests)
 rake test
+
+# Generate pylint and pep8 reports
+rake pep8 > pep8.log || cat pep8.log
+rake pylint > pylint.log || cat pylint.log
 
 # Generate coverage reports
 rake coverage

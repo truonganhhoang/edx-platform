@@ -179,6 +179,8 @@ class CourseFields(object):
     checklists = List(scope=Scope.settings)
     info_sidebar_name = String(scope=Scope.settings, default='Course Handouts')
     show_timezone = Boolean(help="True if timezones should be shown on dates in the courseware", scope=Scope.settings, default=True)
+    enrollment_domain = String(help="External login method associated with user accounts allowed to register in course",
+                        scope=Scope.settings)
 
     # An extra property is used rather than the wiki_slug/number because
     # there are courses that change the number for different runs. This allows
@@ -210,6 +212,9 @@ class CourseDescriptor(CourseFields, SequenceDescriptor):
     template_dir_name = 'course'
 
     def __init__(self, *args, **kwargs):
+        """
+        Expects the same arguments as XModuleDescriptor.__init__
+        """
         super(CourseDescriptor, self).__init__(*args, **kwargs)
 
         if self.wiki_slug is None:

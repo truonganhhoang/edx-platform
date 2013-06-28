@@ -18,11 +18,9 @@ from xmodule.x_module import ModuleSystem
 from xblock.runtime import DbModel
 
 import static_replace
-from .session_kv_store import SessionKeyValueStore
+from .session_kv_store import SessionKeyValueStore, StaticPreviewKeyValueStore
 from .requests import render_from_lms
 from .access import has_access
-
-import traceback
 
 __all__ = ['preview_dispatch', 'preview_component']
 
@@ -42,7 +40,7 @@ def preview_dispatch(request, preview_id, location, dispatch=None):
     """
 
     descriptor = modulestore().get_item(location)
-    instance = load_preview_module(request, preview_id, descriptor)
+    instance = get_preview_module(preview_id, descriptor, request)
     # Let the module handle the AJAX
     try:
         ajax_return = instance.handle_ajax(dispatch, request.POST)
@@ -77,7 +75,7 @@ def preview_component(request, location):
     })
 
 
-def preview_module_system(request, preview_id, descriptor):
+def preview_module_system(preview_id, descriptor, request=None):
     """
     Returns a ModuleSystem for the specified descriptor that is specialized for
     rendering module previews.
@@ -87,34 +85,39 @@ def preview_module_system(request, preview_id, descriptor):
     descriptor: An XModuleDescriptor
     """
 
+    if request is not None:
+        kvs = SessionKeyValueStore(request, descriptor._model_data)
+        get_module = partial(get_preview_module, preview_id, request)  # not actually different
+        user = request.user
+
+    else:
+        #YET TO IMPLEMENT!!
+        kvs = StaticPreviewKeyValueStore(descriptor._model_data)
+        get_module = partial(get_preview_module, preview_id)
+        user = None
+
     def preview_model_data(descriptor):
-        # traceback.print_stack()
         return DbModel(
-            SessionKeyValueStore(request, descriptor._model_data),
+            kvs,
             descriptor.module_class,
             preview_id,
             MongoUsage(preview_id, descriptor.location.url()),
         )
-        return {}
-
-    def preview_get_module(descriptor):
-        return partial(get_preview_module, request, preview_id)
 
     return ModuleSystem(
         ajax_url=reverse('preview_dispatch', args=[preview_id, descriptor.location.url(), '']).rstrip('/'),
         # TODO (cpennington): Do we want to track how instructors are using the preview problems?
         track_function=lambda event_type, event: None,
         filestore=descriptor.system.resources_fs,
-        get_module=preview_get_module,
+        get_module=partial(get_preview_module, request, preview_id),
         render_template=render_from_lms,
         debug=True,
         replace_urls=partial(static_replace.replace_static_urls, data_directory=None, course_namespace=descriptor.location),
-        user=None,
+        user=user,
         xblock_model_data=preview_model_data,
     )
 
-
-def get_preview_module(request, preview_id, descriptor):
+def get_preview_module(preview_id, descriptor, request=None):
     """
     Returns a preview XModule at the specified location. The preview_data is chosen arbitrarily
     from the set of preview data for the descriptor specified by Location
@@ -123,21 +126,7 @@ def get_preview_module(request, preview_id, descriptor):
     preview_id (str): An identifier specifying which preview this module is used for
     location: A Location
     """
-
-    return load_preview_module(request, preview_id, descriptor)
-
-
-def load_preview_module(request, preview_id, descriptor):
-    """
-    Return a preview XModule instantiated from the supplied descriptor, instance_state, and shared_state
-
-    request: The active django request
-    preview_id (str): An identifier specifying which preview this module is used for
-    descriptor: An XModuleDescriptor
-    instance_state: An instance state string
-    shared_state: A shared state string
-    """
-    system = preview_module_system(request, preview_id, descriptor)
+    system = preview_module_system(preview_id, descriptor, request)
     try:
         module = descriptor.xmodule(system)
     except:
@@ -179,6 +168,6 @@ def get_module_previews(request, descriptor):
     """
     preview_html = []
     for idx, (_instance_state, _shared_state) in enumerate(descriptor.get_sample_state()):
-        module = load_preview_module(request, str(idx), descriptor)
+        module = get_preview_module(str(idx), descriptor, request)
         preview_html.append(module.get_html())
     return preview_html

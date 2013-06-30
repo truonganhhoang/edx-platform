@@ -1,7 +1,7 @@
 from django.http import HttpResponse
 from xmodule.modulestore.django import modulestore
 from xmodule.modulestore import Location
-from models import CustomResponseTest
+from models import ContentTest
 from capa.capa_problem import LoncapaProblem
 
 from contentstore.views.preview import get_preview_module
@@ -30,14 +30,14 @@ def test_problem(request):
 
     #get tests for this problem
     try:
-        tests = CustomResponseTest.objects.filter(problem_location=unicode(location))
+        tests = ContentTest.objects.filter(problem_location=unicode(location))
         # pass these to a template to render them
 
     except:
         #return blank page with option for creating a test
         HttpResponse(u'No tests for this problem yet!')
 
-    answer_dict = {u'i4x-test-123-problem-b0be451a94504a6aad56ed239bf4e70d_2_1': u'5381'}
+    answer_dict = {u'i4x-test-123-problem-b0be451a94504a6aad56ed239bf4e70d_2_1': u'5381', u'i4x-test-123-problem-b0be451a94504a6aad56ed239bf4e70d_3_1':6}
     module = get_preview_module(0, problem)
     return_dict = module.lcp.grade_answers(answer_dict)
     # return_dict ={}
@@ -45,7 +45,7 @@ def test_problem(request):
     resp_ids = []
     for r in module.lcp.responders.values():
         resp_ids.append(r.id)
-    return HttpResponse(str(r.inputfields[0].attrib['id']))
+    return HttpResponse(str(return_dict))
 
 
 def edit_test(request):

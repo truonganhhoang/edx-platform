@@ -141,6 +141,9 @@ MITX_FEATURES = {
 
     # Enable instructor dash to submit background tasks
     'ENABLE_INSTRUCTOR_BACKGROUND_TASKS': True,
+
+    # Enable instructor dash to submit background tasks
+    'ENABLE_INSTRUCTOR_BETA_DASHBOARD': False,
 }
 
 # Used for A/B testing

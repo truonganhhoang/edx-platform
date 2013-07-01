@@ -3,19 +3,15 @@ Unit tests for instructor.enrollment methods.
 """
 
 import json
-from django.test.utils import override_settings
 from django.contrib.auth.models import Group, User
-from django.core.urlresolvers import reverse
-from courseware.access import _course_staff_group_name
-from courseware.tests.tests import LoginEnrollmentTestCase, TEST_DATA_XML_MODULESTORE, get_user
-from xmodule.modulestore.django import modulestore
-from student.models import CourseEnrollment, CourseEnrollmentAllowed
+# from courseware.access import _course_staff_group_name
 from courseware.models import StudentModule
 from django.test import TestCase
 from student.tests.factories import UserFactory
 
 from student.models import CourseEnrollment, CourseEnrollmentAllowed
-from instructor.enrollment import enroll_emails, unenroll_emails, split_input_list, reset_student_attempts
+from instructor.enrollment import (enroll_emails, unenroll_emails,
+                                   split_input_list, reset_student_attempts)
 
 
 class TestInstructorEnrollmentDB(TestCase):

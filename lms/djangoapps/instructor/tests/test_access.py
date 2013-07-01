@@ -7,7 +7,7 @@ from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
 
 from django.test.utils import override_settings
 from django.conf import settings
-from courseware.tests.tests import mongo_store_config, xml_store_config
+from uuid import uuid4
 
 from student.models import CourseEnrollment, CourseEnrollmentAllowed
 from courseware.access import get_access_group_name
@@ -19,6 +19,31 @@ from instructor.access import allow_access, revoke_access, list_with_level, upda
 
 # mock dependency
 # get_access_group_name = lambda course, role: '{0}_{1}'.format(course.course_id, role)
+
+
+# moved here from old courseware/tests/tests.py
+# when it disappeared this test broke.
+def mongo_store_config(data_dir):
+    '''
+    Defines default module store using MongoModuleStore
+
+    Use of this config requires mongo to be running
+    '''
+    store = {
+        'default': {
+            'ENGINE': 'xmodule.modulestore.mongo.MongoModuleStore',
+            'OPTIONS': {
+                'default_class': 'xmodule.raw_module.RawDescriptor',
+                'host': 'localhost',
+                'db': 'test_xmodule',
+                'collection': 'modulestore_%s' % uuid4().hex,
+                'fs_root': data_dir,
+                'render_template': 'mitxmako.shortcuts.render_to_string',
+            }
+        }
+    }
+    store['direct'] = store['default']
+    return store
 
 TEST_DATA_DIR = settings.COMMON_TEST_DATA_ROOT
 TEST_DATA_MONGO_MODULESTORE = mongo_store_config(TEST_DATA_DIR)

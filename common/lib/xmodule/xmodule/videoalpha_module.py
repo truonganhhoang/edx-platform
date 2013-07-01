@@ -170,14 +170,14 @@ class VideoAlphaDescriptor(VideoAlphaFields, TabsEditingDescriptor):
     module_class = VideoAlphaModule
     template_dir_name = "videoalpha"
     tabs = [
-         {
-            'name': "Subtitles",
-            'template': "videoalpha/subtitles.html",
-            'current': True,
-            'js': 'test.js'    
+        {
+            'name': "XML",
+            'template': "edit.html",
+            'current': True
         },
         {
-            'name': "Note",
-            'template': "notes.html"
-        }    
+            'name': "Subtitles",
+            'template': "videoalpha/subtitles.html",
+            'current': False
+        }
     ]

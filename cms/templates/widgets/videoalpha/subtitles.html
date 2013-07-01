@@ -11,12 +11,19 @@
 
 <script type='text/javascript'>
     $(document).ready(function(){
+
+        $('.tab').on('TabsEditorDescriptor-idashdjhasdasd', function(e, hash){
+            //alert(hash);
+        })
+
+
         new CMS.Views.SubtitlesImport({
             container: $('#comp-subtitles-${html_id}'),
             tpl: {
                 file: _.template($('#subtitles-import-from-file-${html_id}-tpl').text())
 
             },
+            subtitlesExist: true,
             msg: CMS.Views.SubtitlesMessages,
             modules: [
                 CMS.Views.SubtitlesImportFile,

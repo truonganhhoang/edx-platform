@@ -9,7 +9,8 @@ import xmodule.graders as xmgraders
 
 
 STUDENT_FEATURES = ('username', 'first_name', 'last_name', 'is_staff', 'email')
-PROFILE_FEATURES = ('name', 'language', 'location', 'year_of_birth', 'gender', 'level_of_education', 'mailing_address', 'goals')
+PROFILE_FEATURES = ('name', 'language', 'location', 'year_of_birth', 'gender',
+                    'level_of_education', 'mailing_address', 'goals')
 AVAILABLE_FEATURES = STUDENT_FEATURES + PROFILE_FEATURES
 
 
@@ -19,17 +20,18 @@ def enrolled_students_profiles(course_id, features):
     """
     # enrollments = CourseEnrollment.objects.filter(course_id=course_id)
     # students = [enrollment.user for enrollment in enrollments]
-    students = User.objects.filter(courseenrollment__course_id=course_id).order_by('username').select_related('profile')
-    print len(students)
-    print students
+    students = User.objects.filter(courseenrollment__course_id=course_id)\
+        .order_by('username').select_related('profile')
 
     def extract_student(student):
-        student_features = [feature for feature in features if feature in STUDENT_FEATURES]
-        profile_features = [feature for feature in features if feature in PROFILE_FEATURES]
+        student_features = filter(lambda x: x in features, STUDENT_FEATURES)
+        profile_features = filter(lambda x: x in features, PROFILE_FEATURES)
 
-        student_dict = dict((feature, getattr(student, feature)) for feature in student_features)
+        student_dict = dict((feature, getattr(student, feature))
+                            for feature in student_features)
         profile = student.profile
-        profile_dict = dict((feature, getattr(profile, feature)) for feature in profile_features)
+        profile_dict = dict((feature, getattr(profile, feature))
+                            for feature in profile_features)
         student_dict.update(profile_dict)
         return student_dict
 
@@ -38,12 +40,14 @@ def enrolled_students_profiles(course_id, features):
 
 def dump_grading_context(course):
     """
-    Render information about course grading context (eg which problems are graded in what assignments)
+    Render information about course grading context
+    (e.g. which problems are graded in what assignments)
     Useful for debugging grading_policy.json and policy.json
 
     Returns HTML string
     """
-    msg = "-----------------------------------------------------------------------------\n"
+    hbar = "{}\n".format("-" * 77)
+    msg = hbar
     msg += "Course grader:\n"
 
     msg += '%s\n' % course.grader.__class__
@@ -52,10 +56,11 @@ def dump_grading_context(course):
         msg += '\n'
         msg += "Graded sections:\n"
         for subgrader, category, weight in course.grader.sections:
-            msg += "  subgrader=%s, type=%s, category=%s, weight=%s\n" % (subgrader.__class__, subgrader.type, category, weight)
+            msg += "  subgrader=%s, type=%s, category=%s, weight=%s\n"\
+                % (subgrader.__class__, subgrader.type, category, weight)
             subgrader.index = 1
             graders[subgrader.type] = subgrader
-    msg += "-----------------------------------------------------------------------------\n"
+    msg += hbar
     msg += "Listing grading context for course %s\n" % course.id
 
     gc = course.grading_context
@@ -78,8 +83,9 @@ def dump_grading_context(course):
             notes = ''
             if getattr(s, 'score_by_attempt', False):
                 notes = ', score by attempt!'
-            msg += "      %s (format=%s, Assignment=%s%s)\n" % (s.display_name, format, aname, notes)
+            msg += "      %s (format=%s, Assignment=%s%s)\n"\
+                % (s.display_name, format, aname, notes)
     msg += "all descriptors:\n"
     msg += "length=%d\n" % len(gc['all_descriptors'])
-    msg = '<pre>%s</pre>' % msg.replace('<','&lt;')
+    msg = '<pre>%s</pre>' % msg.replace('<', '&lt;')
     return msg

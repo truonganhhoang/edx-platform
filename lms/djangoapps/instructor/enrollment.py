@@ -28,10 +28,10 @@ def enroll_emails(course_id, student_emails, auto_enroll=False):
     auto_string = {False: 'allowed', True: 'willautoenroll'}[auto_enroll]
 
     status_map = {
-        'user/ce/alreadyenrolled':   [],
-        'user/!ce/enrolled':         [],
-        'user/!ce/rejected':         [],
-        '!user/cea/' + auto_string:  [],
+        'user/ce/alreadyenrolled': [],
+        'user/!ce/enrolled': [],
+        'user/!ce/rejected': [],
+        '!user/cea/' + auto_string: [],
         '!user/!cea/' + auto_string: [],
     }
 

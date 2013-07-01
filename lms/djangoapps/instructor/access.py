@@ -10,7 +10,8 @@ TODO sync instructor and staff flags
 """
 
 from django.contrib.auth.models import User, Group
-from courseware.access import get_access_group_name, course_beta_test_group_name
+from courseware.access import (get_access_group_name,
+                               course_beta_test_group_name)
 from django_comment_common.models import (Role,
                                           FORUM_ROLE_ADMINISTRATOR,
                                           FORUM_ROLE_MODERATOR,

@@ -23,16 +23,54 @@ class ContentTest(models.Model):
     response_dict = models.TextField(blank=True)
 
     def __init__(self, *arg, **kwargs):
-        '''pickle the dictionary for storage, and stringify the location'''
+        '''pickle the dictionary for storage'''
 
         if 'response_dict' not in kwargs:
             kwargs['response_dict'] = {}
 
         kwargs['response_dict'] = pickle.dumps(kwargs['response_dict'])
-        kwargs['problem_location'] = str(kwargs['problem_location'])
         super(ContentTest, self).__init__(*arg, **kwargs)
 
-        print self.pk
+    def save(self, *arg, **kwargs):
+        '''make it automatically create children if needed upon save'''
+
+        # if we are changing something, reset verdict by default
+        if not('dont_reset' in kwargs):
+            self.verdict = None
+        else:
+            kwargs.pop('dont_reset')
+
+        # if we have a dictionary
+        if hasattr(self, 'response_dict'):
+            #if it isn't pickled, update the children with the new dictionary and then pickle it.
+            if not(isinstance(self.response_dict, basestring)):
+                self._update_dictionary(self.response_dict)
+                self.response_dict = pickle.dumps(self.response_dict)
+
+        #save it as normal
+        super(ContentTest, self).save(*arg, **kwargs)
+
+        # look for children
+        children = Response.objects.filter(content_test=self.pk)
+
+        #if there are none, try to create them
+        if children.count() == 0:
+            self._create_children()
+
+    def run(self):
+        '''run the test, and see if it passes'''
+
+        # process dictionary that is the response from grading
+        grade_dict = self._evaluate(self._create_response_dictionary())
+
+        # compare the result with what is should be
+        self.verdict = self._make_verdict(grade_dict)
+
+        # write the change to the database and return the result
+        self.save(dont_reset=True)
+        return self.verdict
+
+#======= Private Methods =======#
 
     def _make_capa(self):
         # create a preview capa problem
@@ -46,20 +84,7 @@ class ContentTest(models.Model):
 
         return problem_capa
 
-    def run(self):
-        '''run the test, and see if it passes'''
-
-        # process dictionary that is the response from grading
-        grade_dict = self.evaluate(self._create_response_dictionary())
-
-        # compare the result with what is should be
-        self.verdict = self.make_verdict(grade_dict)
-
-        # write the change to the database and return the result
-        self.save()
-        return self.verdict
-
-    def evaluate(self, response_dict):
+    def _evaluate(self, response_dict):
         '''evaluate the problem with the response_dict and return the correct/incorrect result'''
 
         # instantiate the capa problem so it can grade itself
@@ -67,7 +92,7 @@ class ContentTest(models.Model):
         grade_dict = capa.grade_answers(response_dict)
         return grade_dict
 
-    def make_verdict(self, correct_map):
+    def _make_verdict(self, correct_map):
         '''compare what the result of the grading should be with the actual grading'''
 
         # this will all change because self.shuold_be will become a dictionary!!
@@ -112,6 +137,14 @@ class ContentTest(models.Model):
             # tell it to put its children in the database
             response_model._create_children(responder, pickle.loads(self.response_dict))
 
+    def _update_dictionary(self, new_dict):
+        '''update the input models with the new responses'''
+
+        for resp_model in self.response_set.all():
+            for input_model in resp_model.input_set.all():
+                input_model.answer = new_dict[input_model.string_id]
+                input_model.save()
+
 
 class Response(models.Model):
     '''Object that corresponds to the <_____response> fields'''
@@ -120,7 +153,7 @@ class Response(models.Model):
     content_test = models.ForeignKey(ContentTest)
 
     # the string identifier
-    string_id = models.CharField(max_length=100, editable=False, unique=True)
+    string_id = models.CharField(max_length=100, editable=False)
 
     # the inner xml of this response (used to extract the object quickly (ideally))
     xml = models.TextField(editable=False)
@@ -131,8 +164,6 @@ class Response(models.Model):
         # see if we need to construct the object from database
         if resp_obj is None:
             resp_obj = self._make_capa()
-
-        print response_dict
 
         # go through inputs in this response object
         for entry in resp_obj.inputfields:
@@ -168,7 +199,7 @@ class Input(models.Model):
     response = models.ForeignKey(Response)
 
     # sequence (first response field, second, etc)
-    string_id = models.CharField(max_length=100, editable=False, unique=True)
+    string_id = models.CharField(max_length=100, editable=False)
 
     # the input, supposed a string
     answer = models.CharField(max_length=50, blank=True)

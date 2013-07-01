@@ -620,11 +620,12 @@ class LoncapaProblem(object):
         '''
         response_id = 1
         self.responders = {}
+
         for response in tree.xpath('//' + "|//".join(response_tag_dict)):
             response_id_str = self.problem_id + "_" + str(response_id)
             # create and save ID for this response
             response.set('id', response_id_str)
-            response_id += 1
+            response_id += 1  # THIS HAPPENS TOO EARLY!!
 
             answer_id = 1
             input_tags = inputtypes.registry.registered_tags()

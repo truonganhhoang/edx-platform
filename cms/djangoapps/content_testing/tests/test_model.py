@@ -60,9 +60,33 @@ def test_prime(expect,ans):
         }
         assert self.problem
 
+        # Make a collection of ContentTests to test
+        self.pass_correct = ContentTest.objects.create(
+            problem_location=self.problem.location,
+            should_be=True,
+            response_dict=self.response_dict_correct
+        )
+
+        self.pass_incorrect = ContentTest.objects.create(
+            problem_location=self.problem.location,
+            should_be=False,
+            response_dict=self.response_dict_incorrect
+        )
+
+        self.fail_correct = ContentTest.objects.create(
+            problem_location=self.problem.location,
+            should_be=False,
+            response_dict=self.response_dict_correct
+        )
+
+        self.fail_incorrect = ContentTest.objects.create(
+            problem_location=self.problem.location,
+            should_be=True,
+            response_dict=self.response_dict_incorrect
+        )
 
 class WhiteBoxTests(ContentTestTest):
-    '''test that inner methods involved in creation work'''
+    '''test that inner methods are working'''
 
     def test_make_capa(self):
         '''test that the capa instantiation happens properly'''
@@ -76,13 +100,12 @@ class WhiteBoxTests(ContentTestTest):
         assert self.script in capa.problem_text
 
     def test_create_children(self):
-        '''test that the ContentTest is created with te right structure'''
+        '''test that the ContentTest is created with the right structure'''
+        
+        # import nose; nose.tools.set_trace()
         test_model = ContentTest.objects.create(
             problem_location=str(self.problem.location),
             should_be=True)
-
-        #make it create children
-        test_model._create_children()
 
         #check that the response created properly
         response_set = test_model.response_set
@@ -99,45 +122,90 @@ class WhiteBoxTests(ContentTestTest):
             should_be=True,
             response_dict=self.response_dict_correct
         )
-        test_model._create_children()
+        # test_model._create_children()
 
         created_dict = test_model._create_response_dictionary()
 
         self.assertEqual(self.response_dict_correct, created_dict)
 
+    def test_update_dict(self):
+        '''tests the internal functionality of updating the dictionary'''
+        test_model = self.pass_correct
+
+        #update the dictionary with wrong answers
+        test_model._update_dictionary(self.response_dict_incorrect)
+
+        #make sure the test now fails
+        test_model.run()
+        self.assertEqual(test_model.verdict, False)
+
 
 class BlackBoxTests(ContentTestTest):
-    '''test overall behavior'''
+    '''test overall behavior of the ContentTest model'''
 
-    def test_pass(self):
-        '''test that it passes when it should'''
+    def test_pass_correct(self):
+        '''test that it passes with correct answers when it should'''
 
-        test_model = ContentTest.objects.create(
-            problem_location=self.problem.location,
-            should_be=True,
-            response_dict=self.response_dict_correct
-        )
-        test_model._create_children()  # REALLY hate that I have to do this
-
-        # run the testcase
-        test_model.run()
+        # run the test
+        self.pass_correct.run()
 
         # make sure it passed
-        verdict = test_model.verdict
-        self.assertEqual(True, verdict)
+        self.assertEqual(True, self.pass_correct.verdict)
 
-    def test_fail(self):
-
-        test_model = ContentTest.objects.create(
-            problem_location=self.problem.location,
-            should_be=True,
-            response_dict=self.response_dict_incorrect
-        )
-        test_model._create_children()  # REALLY hate that I have to do this
+    def test_fail_incorrect(self):
+        '''test that it fails with incorrect answers'''
 
         # run the testcase
-        test_model.run()
+        self.fail_incorrect.run()
+
+        # make sure it failed
+        self.assertEqual(False, self.fail_incorrect.verdict)
+
+    def test_pass_incorrect(self):
+        '''test that it passes with incorrect'''
+
+        # run the test
+        self.pass_incorrect.run()
 
         # make sure it passed
-        verdict = test_model.verdict
-        self.assertEqual(False, verdict)
+        self.assertEqual(True, self.pass_incorrect.verdict)
+
+    def test_fail_correct(self):
+        '''test that it fails with incorrect answers'''
+
+        # run the testcase
+        self.fail_incorrect.run()
+
+        # make sure it failed
+        self.assertEqual(False, self.fail_incorrect.verdict)
+
+
+    def test_reset_verdict(self):
+        '''test that changing things resets the verdict'''
+
+        test_model = self.pass_correct
+
+        # run the testcase (generates verdict)
+        test_model.run()
+
+        # update test
+        test_model.response_dict = self.response_dict_incorrect
+        test_model.save()
+
+        #ensure that verdict is now null
+        self.assertEqual(None, test_model.verdict)
+
+    def test_change_dict(self):
+        '''test that the verdict changes with the new dictionary on new run'''
+
+        test_model = self.pass_correct
+
+        # update test
+        test_model.response_dict = self.response_dict_incorrect
+        test_model.save()
+
+        # run the test
+        test_model.run()
+
+        # assert that the verdict is now False
+        self.assertEqual(False, test_model.verdict)

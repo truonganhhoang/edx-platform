@@ -44,6 +44,12 @@ class @TabsEditorDescriptor
 
   save: ->
     @element.off('click', '.editor-tabs .tab', @onSwitchEditor)
+    # Link to instance of CodeMirror is stored in data attribute of DOM element
+    # If it exist we retreive the data from CodeMirror
+    advanced_editor = $('.edit-box', @element).first().data('CodeMirror')
+    if advanced_editor
+      text = advanced_editor.getValue()
+      data: text
 
 window.TabsEditorDescriptor = window.TabsEditorDescriptor || {};
 TabsEditorDescriptor.registerTabCallback = (id, name, callback) ->

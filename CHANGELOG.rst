@@ -5,6 +5,8 @@ These are notable changes in edx-platform.  This is a rolling list of changes,
 in roughly chronological order, most recent first.  Add your entries at or near
 the top.  Include a label indicating the component affected.
 
+Studio: Added support for uploading and managing PDF textbooks
+
 Common: Student information is now passed to the tracking log via POST instead of GET.
 
 Common: Add tests for documentation generation to test suite

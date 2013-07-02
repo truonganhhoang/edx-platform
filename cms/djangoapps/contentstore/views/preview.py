@@ -65,7 +65,7 @@ def preview_dispatch(request, preview_id, location, dispatch=None):
 def preview_component(request, location):
     # TODO (vshnayder): change name from id to location in coffee+html as well.
     if not has_access(request.user, location):
-        raise HttpResponseForbidden()
+        return HttpResponseForbidden()
 
     component = modulestore().get_item(location)
 

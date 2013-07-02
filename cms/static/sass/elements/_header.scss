@@ -2,7 +2,7 @@
 // ====================
 
 .wrapper-header {
-  @extend .depth3;
+  @extend .ui-depth3;
   margin: 0;
   padding: $baseline;
   border-bottom: 1px solid $gray;
@@ -67,7 +67,7 @@
   padding-right: ($baseline*0.75);
 
   a {
-    @extend .text-hide;
+    @extend .cont-text-hide;
     display: block;
     width: 164px;
     height: 32px;

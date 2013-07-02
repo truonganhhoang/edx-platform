@@ -173,11 +173,10 @@ class VideoAlphaDescriptor(VideoAlphaFields, TabsEditingDescriptor):
         {
             'name': "XML",
             'template': "edit.html",
-            'current': True
+            'current': True,
         },
         {
             'name': "Subtitles",
             'template': "videoalpha/subtitles.html",
-            'current': False
         }
     ]

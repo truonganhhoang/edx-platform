@@ -10,8 +10,9 @@ class @TabsEditorDescriptor
 
     # If default visible tab is not setted or if were marked as current
     # more than 1 tab just first tab will be shown
-    if @$tabs.filter('.current').length isnt 1
-      @$tabs.first().trigger("click", [true])
+    currentTab = @$tabs.filter('.current')
+    currentTab = @$tabs.first() if currentTab.length isnt 1
+    currentTab.trigger("click", [true])
 
    onSwitchEditor: (e, reset) =>
     e.preventDefault();

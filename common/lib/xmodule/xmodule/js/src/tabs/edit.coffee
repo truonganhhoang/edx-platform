@@ -25,7 +25,8 @@ class @TabsEditorDescriptor
       @$tabs.removeClass('current')
       $currentTarget.addClass('current')
 
-      # Tabs are implemeted like anchors. Therefore we can use hash to find corresponding content
+      # Tabs are implemeted like anchors. Therefore we can use hash to find
+      # corresponding content
       content_id = $currentTarget.attr('href')
 
       @$content
@@ -34,7 +35,7 @@ class @TabsEditorDescriptor
         .removeClass(isInactiveClass)
 
       @$tabs.closest('.wrapper-comp-editor').trigger(
-        'TabsEditor',  # event
+        'TabsEditor:changeTab',
         [
           $currentTarget.text(), # tab_name
           content_id  # tab_id
@@ -43,3 +44,10 @@ class @TabsEditorDescriptor
 
   save: ->
     @element.off('click', '.editor-tabs .tab', @onSwitchEditor)
+
+window.TabsEditorDescriptor = window.TabsEditorDescriptor || {};
+TabsEditorDescriptor.registerTabCallback = (id, name, callback) ->
+  $('#editor-tab-' + id).on 'TabsEditor:changeTab', (e, tab_name, tab_id) ->
+    e.stopPropagation()
+    callback() if typeof callback is "function" and tab_name is name
+

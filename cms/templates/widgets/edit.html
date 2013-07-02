@@ -1,11 +1,11 @@
 <%! from django.utils.translation import ugettext as _ %>
+<%page args="tabName"/>
 <div style="margin: -20px;">
   <textarea id="advanced-${html_id}" class="edit-box">${data | h}</textarea>
 </div>
 
 <script type='text/javascript'>
     $(document).ready(function(){
-
       (function(){
         var advanced_editor = CodeMirror.fromTextArea(
           $("#advanced-${html_id}").get(0),
@@ -15,14 +15,10 @@
             lineWrapping: true
           }
         );
-
-        $('#editor-tab-${html_id}').on('TabsEditor', function(e, tab_name, tab_id){
-            if (tab_name.toLowerCase() === 'xml'){
-                advanced_editor.refresh();
-                advanced_editor.focus();
-            }
-        });
-
+        TabsEditorDescriptor.registerTabCallback('${html_id}', '${tabName}', function(){
+          advanced_editor.refresh();
+          advanced_editor.focus();
+        })
       }());
     });
 </script>

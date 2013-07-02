@@ -38,8 +38,7 @@ class TabsEditingDescriptor(EditingFields, MakoModuleDescriptor):
     This class is intended to be used as a mixin.
     """
     mako_template = "widgets/tabs-edit.html"
-    css = {'scss': [resource_string(__name__, 'css/editor/edit.scss'), 
-                    resource_string(__name__, 'css/tabs/display.scss')]}
+    css = {'scss': [resource_string(__name__, 'css/tabs/display.scss')]}
     js = {'coffee': [resource_string(__name__, 'js/src/tabs/edit.coffee')]}
     js_module_name = "TabsEditorDescriptor"
 
